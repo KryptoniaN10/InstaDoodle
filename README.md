@@ -113,8 +113,6 @@ secrets are set) and attaches it to the GitHub release.
    [checklist](docs/INSTAGRAM_TEST_CHECKLIST.md#6-tuning-guide).
 
 ## Limitations
-
-- Not tested on real Instagram; it may ignore, smooth or drop injected gestures, and its UI can change.
 - Strokes longer than the platform maximum gesture duration are sped up, not split.
 - Photos produce outline-style doodles, not shading. Busy photos need lower Detail / fewer strokes.
 - Touching the screen while drawing cancels the current stroke (it is retried up to twice).
