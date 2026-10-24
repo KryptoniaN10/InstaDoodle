@@ -57,7 +57,9 @@ class OverlayController(
     private val resizeParams = overlayParams(touchable = true).apply { width = handleSize; height = handleSize }
 
     fun show() {
-        if (showing) return
+        if (showing && controlView.isAttachedToWindow) return
+        // The system can drop overlay windows (e.g. while a UiAutomation client is connected).
+        if (showing) removeViews()
         showing = true
         controlView = buildControlPanel()
         applyRect(currentRect())
@@ -76,6 +78,10 @@ class OverlayController(
         if (!showing) return
         showing = false
         player.stop()
+        removeViews()
+    }
+
+    private fun removeViews() {
         scope?.cancel()
         scope = null
         listOf<View>(controlView, frameView, moveHandle, resizeHandle).forEach { runCatching { wm.removeView(it) } }

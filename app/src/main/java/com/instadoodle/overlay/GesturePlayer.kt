@@ -22,6 +22,8 @@ data class PlayerProgress(val state: PlayerState, val done: Int, val total: Int,
 /**
  * Replays strokes one gesture at a time, chaining the next stroke from the completion
  * callback. Cancelled strokes are retried up to [maxRetries] times, then skipped.
+ * A cancel usually means a real finger touched the screen, so the next dispatch waits
+ * [cancelBackoffMs] to let that tap (e.g. on Pause/Stop) finish instead of cancelling it.
  * A generation counter makes callbacks from stopped/restarted runs harmless.
  * Not thread-safe: call from the main thread only.
  */
@@ -29,6 +31,7 @@ class GesturePlayer(
     private val dispatcher: GestureDispatcher,
     private val scheduler: Scheduler,
     private val maxRetries: Int = 2,
+    private val cancelBackoffMs: Long = 400,
 ) {
     private val _progress = MutableStateFlow(PlayerProgress(PlayerState.IDLE, 0, 0))
     val progress: StateFlow<PlayerProgress> = _progress.asStateFlow()
@@ -111,13 +114,13 @@ class GesturePlayer(
             skipped++
             publish()
         }
-        scheduleNext()
+        scheduleNext(maxOf(interStrokeDelayMs, cancelBackoffMs))
     }
 
-    private fun scheduleNext() {
+    private fun scheduleNext(delayMs: Long = interStrokeDelayMs) {
         if (state != PlayerState.PLAYING) return
         val gen = generation
-        scheduler.schedule(interStrokeDelayMs) { if (gen == generation) dispatchCurrent() }
+        scheduler.schedule(delayMs) { if (gen == generation) dispatchCurrent() }
     }
 
     private fun setState(newState: PlayerState) {
