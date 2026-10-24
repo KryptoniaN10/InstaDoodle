@@ -37,6 +37,10 @@ PHOTO mode switched from thresholded DoG to Canny edges, plus speck removal, spu
 
 Max strokes now goes up to 1000 (default 400), default Detail is 70%, and images are processed at up to 1024 px. Portrait sample: 256 strokes at defaults, 478 at Detail 100% / Max 1000.
 
+## UI update (v1.0.4)
+
+Animated splash, gradient brand theme with dark mode, redesigned Home/Preview/Library/Settings, and an estimated drawing time on Preview. Overlay + test canvas re-checked after the redesign.
+
 ## Known limitations
 
 - Instagram compatibility is unknown. Instagram may change its UI, ignore injected gestures, or

@@ -10,11 +10,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.instadoodle.data.SketchSession
 import com.instadoodle.overlay.DoodleAccessibilityService
@@ -29,7 +30,8 @@ class MainActivity : ComponentActivity() {
             viewModel.navigate(Screen.ONBOARDING)
         }
         setContent {
-            MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFFC2185B), secondary = Color(0xFF7B1FA2))) {
+            InstaDoodleTheme {
+                var splashDone by rememberSaveable { mutableStateOf(false) }
                 val state by viewModel.state.collectAsStateWithLifecycle()
                 val settings by viewModel.settings.collectAsStateWithLifecycle()
                 val serviceRunning by DoodleAccessibilityService.instance.collectAsStateWithLifecycle()
@@ -48,7 +50,10 @@ class MainActivity : ComponentActivity() {
                     drawOnTestCanvas = { startOverlay(openInstagram = false) },
                     sendToInstagram = { startOverlay(openInstagram = true) },
                 )
-                AppContent(state, settings, serviceRunning != null, viewModel, actions)
+                Crossfade(splashDone, label = "splash") { done ->
+                    if (done) AppContent(state, settings, serviceRunning != null, viewModel, actions)
+                    else SplashScreen { splashDone = true }
+                }
             }
         }
     }

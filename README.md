@@ -11,9 +11,9 @@ any app that accepts finger drawing (an in-app test canvas is included).
 > tested in the real Instagram app.** See [docs/INSTAGRAM_TEST_CHECKLIST.md](docs/INSTAGRAM_TEST_CHECKLIST.md)
 > and [PROGRESS.md](PROGRESS.md).
 
-| Home | Preview | Drawing on test canvas | Calibration |
-| --- | --- | --- | --- |
-| ![Home](docs/screenshots/01-home.png) | ![Preview](docs/screenshots/02-preview-logo.png) | ![Drawing](docs/screenshots/06-overlay-done.png) | ![Calibrate](docs/screenshots/08-calibration-cross.png) |
+| Splash | Home | Preview | Drawing on test canvas | Calibration |
+| --- | --- | --- | --- | --- |
+| ![Splash](docs/screenshots/00-splash.png) | ![Home](docs/screenshots/01-home.png) | ![Preview](docs/screenshots/02-preview-logo.png) | ![Drawing](docs/screenshots/06-overlay-done.png) | ![Calibrate](docs/screenshots/08-calibration-cross.png) |
 
 More in [docs/screenshots](docs/screenshots).
 

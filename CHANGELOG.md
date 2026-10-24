@@ -14,6 +14,13 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-25T00:08:37+05:30 — UI redesign and splash animation
+
+- Changed: New `SplashScreen` (a pen draws a star and squiggle, then the title pops in); `Theme.kt` with Instagram-style gradient brand colours and light/dark schemes; system splash and window background themed (`res/values*/themes.xml`, manifest); `Screens.kt` redesigned: gradient hero header with overlay status pill, large image picker card, sample chips, Photo/Line art chips with explanations, gradient Generate / Send buttons, quick-action tiles (Library count, Settings, Demo, Test canvas), Preview stat chips with an estimated drawing time and replay progress bar, Library as a 2-column grid, Settings grouped in cards; version 1.0.4.
+- Why: User asked for a splash animation and a more beautiful, useful UI.
+- Validation: `./gradlew testDebugUnitTest assembleDebug` pass; on the emulator checked splash, onboarding (light and dark), Home, Preview, Library, Settings, and that the overlay still opens and draws on the test canvas from the new Preview "Test" button (screenshots `docs/screenshots/00`, `01`, `09`, `11`, `12`, `13`).
+- Limitations: Drawing-time estimate assumes a ~900 px placement rectangle. Instagram not tested.
+
 ## 2026-10-24T23:35:30+05:30 — More detailed sketches, higher stroke limit
 
 - Changed: Max strokes slider 20–500 → 20–1000 and default 250 → 400; default Detail 50% → 70%; working resolution 512 → 1024 px (`EngineConfig.MAX_WORKING_SIDE`; only downscales, so large gallery photos keep more detail); PHOTO Canny uses less blur and lower thresholds as Detail rises (`ImagePreprocessor.photoLines`); version 1.0.3.
