@@ -4,6 +4,13 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-24T22:55:00+05:30 — Fix release workflow signing fallback
+
+- Changed: `.github/workflows/release.yml` builds the debug variant first when no release keystore secret is set, so the debug keystore exists for the fallback signing config; version bumped to 1.0.1.
+- Why: The `v1.0.0` release run failed in `validateSigningRelease` (debug keystore not found on the fresh runner), so no APK was attached to a GitHub Release.
+- Validation: `./gradlew assembleRelease` passes locally; CI result recorded in the `v1.0.1` release run.
+- Limitations: Without the `RELEASE_KEYSTORE_*` secrets each release is signed with a different throwaway key.
+
 ## 2026-10-24T21:46:00+05:30 — Emulator verification fixes, instrumented tests, docs
 
 - Changed: `GesturePlayer` waits 400 ms before retrying a cancelled stroke so overlay taps (Pause/Stop) are not swallowed; `OverlayController.show()` re-adds overlay windows dropped by the system; added `SketchEngineInstrumentedTest`; rewrote `README.md`; added `PROGRESS.md`, `docs/INSTAGRAM_TEST_CHECKLIST.md`, `docs/screenshots/`; filled in `AI_USAGE.md` and `SUBMISSION.md`.

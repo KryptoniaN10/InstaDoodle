@@ -20,7 +20,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v3
       # Optional real signing: add RELEASE_KEYSTORE_BASE64, RELEASE_KEYSTORE_PASSWORD,
       # RELEASE_KEY_ALIAS and RELEASE_KEY_PASSWORD repository secrets. Without them the
-      # release APK is signed with the debug key (installable, personal use only).
+      # release APK is signed with the runner's debug key (installable, personal use only;
+      # each release gets a different key, so uninstall before installing a newer one).
       - name: Decode keystore
         env:
           KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
@@ -33,7 +34,10 @@ jobs:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --console=plain
+        # assembleDebug first creates the debug keystore used as the signing fallback.
+        run: |
+          if [ -z "${RELEASE_KEYSTORE_PATH:-}" ]; then ./gradlew assembleDebug --console=plain; fi
+          ./gradlew assembleRelease --console=plain
       - uses: actions/upload-artifact@v4
         with:
           name: instadoodle-release-apk
