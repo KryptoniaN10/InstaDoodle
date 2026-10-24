@@ -6,6 +6,14 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// Read local.properties so the Gemini API key can be injected at build time.
+// Add GEMINI_API_KEY=AIza... to local.properties (already in .gitignore).
+val localProps = Properties()
+val localPropsFile = rootProject.file("local.properties")
+if (localPropsFile.exists()) {
+    localPropsFile.inputStream().use { localProps.load(it) }
+}
+
 android {
     namespace = "com.instadoodle.app"
     compileSdk = 34
@@ -14,21 +22,16 @@ android {
         applicationId = "com.instadoodle.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.1.0"
+        versionCode = 1
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
 
-        // Expose the Gemini API key via BuildConfig so it never appears in source.
-        val localProps = Properties().also { props ->
-            rootProject.file("local.properties")
-                .takeIf { it.exists() }
-                ?.inputStream()
-                ?.use { props.load(it) }
-        }
+        // Bake the API key from local.properties into the APK as BuildConfig.GEMINI_API_KEY.
+        // Falls back to an empty string when the key is absent (AI mode disabled at runtime).
         buildConfigField(
             "String",
             "GEMINI_API_KEY",
@@ -36,28 +39,9 @@ android {
         )
     }
 
-    signingConfigs {
-        create("release") {
-            val keystorePath = System.getenv("RELEASE_KEYSTORE_PATH")
-            if (keystorePath != null) {
-                storeFile = file(keystorePath)
-                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
-                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
-            } else {
-                val debug = getByName("debug")
-                storeFile = debug.storeFile
-                storePassword = debug.storePassword
-                keyAlias = debug.keyAlias
-                keyPassword = debug.keyPassword
-            }
-        }
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -79,7 +63,7 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true
+        buildConfig = true   // needed to expose BuildConfig.GEMINI_API_KEY
     }
 
     composeOptions {

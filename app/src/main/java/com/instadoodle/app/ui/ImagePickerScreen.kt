@@ -78,6 +78,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.instadoodle.app.BuildConfig
 import com.instadoodle.app.drawing.PathSimplifier
 import com.instadoodle.app.drawing.Sketch
 import com.instadoodle.app.drawing.SketchStorage
@@ -108,9 +109,16 @@ fun ImagePickerScreen(
     var isProcessing by remember { mutableStateOf(false) }
     var statusText by remember { mutableStateOf("") }
 
-    // AI preprocessing toggle + API key
-    var useAiPreprocessing by remember { mutableStateOf(false) }
-    var aiApiKey by remember { mutableStateOf(prefs.getString("gemini_api_key", "") ?: "") }
+    // AI preprocessing toggle + API key.
+    // Priority: build-time key (BuildConfig) > SharedPreferences runtime entry.
+    val buildTimeKey = BuildConfig.GEMINI_API_KEY
+    var useAiPreprocessing by remember { mutableStateOf(buildTimeKey.isNotBlank()) }
+    var aiApiKey by remember {
+        mutableStateOf(
+            buildTimeKey.takeIf { it.isNotBlank() }
+                ?: (prefs.getString("gemini_api_key", "") ?: "")
+        )
+    }
 
     // Pipeline Sliders & Settings
     var extractionMode by remember { mutableStateOf(ContourExtractor.Mode.PHOTO) }
@@ -369,20 +377,46 @@ fun ImagePickerScreen(
                         )
                     }
 
-                    AnimatedVisibility(visible = useAiPreprocessing) {
-                        OutlinedTextField(
-                            value = aiApiKey,
-                            onValueChange = { key ->
-                                aiApiKey = key
-                                prefs.edit().putString("gemini_api_key", key).apply()
-                            },
-                            label = { Text("Gemini API Key") },
-                            placeholder = { Text("AIza...") },
-                            visualTransformation = PasswordVisualTransformation(),
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
-                        )
+                    AnimatedVisibility(visible = useAiPreprocessing && buildTimeKey.isBlank()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            OutlinedTextField(
+                                value = aiApiKey,
+                                onValueChange = { key ->
+                                    aiApiKey = key
+                                    prefs.edit().putString("gemini_api_key", key).apply()
+                                },
+                                label = { Text("Gemini API Key") },
+                                placeholder = { Text("AIza...") },
+                                visualTransformation = PasswordVisualTransformation(),
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            Text(
+                                text = "Get a free key at aistudio.google.com/app/apikey",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    // When key is baked in at build time, show a small confirmation
+                    AnimatedVisibility(visible = useAiPreprocessing && buildTimeKey.isNotBlank()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "API key set at build time",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
