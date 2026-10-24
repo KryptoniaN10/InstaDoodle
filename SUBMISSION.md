@@ -7,7 +7,7 @@ Complete this file during the hackathon and use it to prepare your submission th
 - **Project name:** InstaDoodle
 - **Short description:** Android app that turns an image into a simplified hand-drawn stroke set and replays it as touch gestures (AccessibilityService overlay) on drawing canvases such as Instagram DM Draw. On-device only, no network.
 - **Code repository URL:** https://github.com/KryptoniaN10/InstaDoodle
-- **Final submitted implementation commit SHA:** TODO — fill in after the final push
+- **Final submitted implementation commit SHA:** `142779d` (later commits only update docs)
 - **Working demo URL or local demo steps:** Install the debug APK, enable the accessibility service, pick the Logo sample → Generate sketch → Test canvas → Start. See README "First run" and `docs/screenshots/`.
 - **Demo access requirements:** Android 8.0+ device or emulator. No accounts needed for the test canvas; Instagram account only for the (untested) Instagram flow.
 
