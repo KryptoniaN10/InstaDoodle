@@ -21,7 +21,7 @@ data class Stroke(val points: List<Point>) {
 
 /** Line extraction strategy. */
 enum class SketchMode {
-    /** Photos: XDoG-style edge extraction. */
+    /** Photos: Canny edge contours. */
     PHOTO,
 
     /** Logos / high-contrast art: Otsu threshold, filled regions become outlines. */
@@ -43,7 +43,10 @@ data class EngineConfig(
     val maxStrokes: Int = 250,
     val minStrokeLengthPx: Float = 8f,
     val mergeDistancePx: Float = 3f,
-    val simplifyEpsilonPx: Float = 1.2f,
+    val simplifyEpsilonPx: Float = 0.8f,
+    val minComponentPx: Int = 6,
+    val spurLengthPx: Int = 5,
+    val smoothIterations: Int = 2,
     val orderStrokes: Boolean = true,
     val twoOptPasses: Int = 2,
 ) {

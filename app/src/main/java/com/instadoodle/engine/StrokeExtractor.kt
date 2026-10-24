@@ -7,10 +7,13 @@ package com.instadoodle.engine
 object StrokeExtractor {
 
     fun extract(binary: BinaryImage, config: EngineConfig): List<Stroke> {
-        val skeleton = Thinning.thin(binary)
+        val cleaned = Cleanup.removeSmallComponents(binary, config.minComponentPx)
+        val skeleton = Cleanup.pruneSpurs(Thinning.thin(cleaned), config.spurLengthPx)
         val traced = SkeletonTracer.trace(skeleton)
         val merged = StrokeFilter.mergeClose(traced, config.mergeDistancePx)
-        val simplified = merged.map { Simplifier.simplify(it, config.simplifyEpsilonPx) }
+        val simplified = merged.map {
+            Simplifier.simplify(Cleanup.smooth(it, config.smoothIterations), config.simplifyEpsilonPx)
+        }
         val kept = StrokeFilter.capLongest(StrokeFilter.dropShort(simplified, config.minStrokeLengthPx), config.maxStrokes)
         val normalized = normalize(kept, binary.width, binary.height)
         return if (config.orderStrokes) StrokeOrderer.order(normalized, config.twoOptPasses) else normalized

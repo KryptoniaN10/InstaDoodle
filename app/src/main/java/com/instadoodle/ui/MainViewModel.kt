@@ -78,7 +78,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 mode = s.mode,
                 detail = s.detail,
                 maxStrokes = s.maxStrokes,
-                minStrokeLengthPx = 4f + (1f - s.detail) * 16f,
+                minStrokeLengthPx = 3f + (1f - s.detail) * 12f,
             )
             try {
                 val strokes = SketchEngine.createSketch(bitmap, config)

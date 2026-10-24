@@ -8,6 +8,7 @@ If maintaining this record, briefly document the actual contributions of whichev
 | --- | --- | --- | --- | --- | --- |
 | 2026-10-24T21:39+05:30 | Devin (Cognition AI) | Milestones 0–2: Gradle project, CI, accessibility overlay + gesture player, image-to-strokes engine, Compose UI, storage, sample images, unit tests | Wrote all files under `app/`, `.github/workflows/`, Gradle files | Pending | `assembleDebug` and `testDebugUnitTest` pass; APK launched on API 34 emulator |
 | 2026-10-24T21:46+05:30 | Devin (Cognition AI) | Milestones 3–4: emulator verification, two overlay fixes, instrumented tests, README/PROGRESS/checklist/screenshots | `overlay/GesturePlayer.kt`, `overlay/OverlayController.kt`, `app/src/androidTest/`, docs | Pending | `connectedDebugAndroidTest` 4/4 pass; test-canvas replay with pause/stop/calibrate verified manually on emulator; Instagram not tested |
+| 2026-10-24T23:23+05:30 | Devin (Cognition AI) | Sketch accuracy: Canny PHOTO edges, speck/spur cleanup, smoothing, accuracy test | `engine/ImagePreprocessor.kt`, `engine/Cleanup.kt`, `engine/StrokeExtractor.kt`, `engine/Stroke.kt`, `ui/MainViewModel.kt`, `AccuracyTest.kt` | Pending | Unit + instrumented tests pass; portrait preview checked on emulator |
 
 ## Template preparation
 

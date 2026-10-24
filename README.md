@@ -51,7 +51,7 @@ flowchart LR
     end
     VM[MainViewModel<br/>StateFlow]
     subgraph Engine["engine/"]
-        Loader[ImageLoader<br/>EXIF, downsample] --> Pre[ImagePreprocessor<br/>OpenCV: resize 512, denoise,<br/>DoG / Otsu]
+        Loader[ImageLoader<br/>EXIF, downsample] --> Pre[ImagePreprocessor<br/>OpenCV: resize 512, denoise,<br/>Canny / Otsu]
         Pre --> Extract[StrokeExtractor<br/>thin → trace → merge →<br/>simplify → filter → normalise → order]
     end
     subgraph Data["data/"]

@@ -14,6 +14,13 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-24T23:23:03+05:30 — More accurate sketches (PHOTO edges, noise and spur cleanup)
+
+- Changed: PHOTO mode in `ImagePreprocessor` now uses Canny edges (bilateral + Gaussian smoothing, median-based thresholds) instead of thresholded DoG; new `Cleanup` removes ink specks before thinning, prunes short skeleton spurs, and smooths pixel staircase before simplification (`StrokeExtractor`, `EngineConfig`); simplify epsilon 1.2 → 0.8 px; minimum stroke length at 50% detail 12 → 9 px; added `AccuracyTest`; refreshed preview screenshots; version 1.0.2.
+- Why: The DoG output was filled blobs that thinning collapsed to dots, so faces (eyes, nose, mouth, chin) disappeared from portrait sketches.
+- Validation: `./gradlew testDebugUnitTest` passes (AccuracyTest: recall ≥ 0.95, precision 1.0 on all three samples); `./gradlew connectedDebugAndroidTest` 4/4 pass; on the emulator the portrait preview now shows the face, logo and handwriting unchanged (`docs/screenshots/02`, `09`, `10`).
+- Limitations: Canny draws both sides of thick lines in photos; very small details (e.g. eyes in a small face) can still be dropped by the minimum stroke length. Instagram replay accuracy not tested.
+
 ## 2026-10-24T22:55:00+05:30 — Fix release workflow signing fallback
 
 - Changed: `.github/workflows/release.yml` builds the debug variant first when no release keystore secret is set, so the debug keystore exists for the fallback signing config; version bumped to 1.0.1.

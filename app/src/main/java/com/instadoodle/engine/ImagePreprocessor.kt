@@ -21,7 +21,7 @@ object ImagePreprocessor {
             Imgproc.cvtColor(rgba, gray, Imgproc.COLOR_RGBA2GRAY)
             val small = resize(gray, mat())
             val lines = when (config.mode) {
-                SketchMode.PHOTO -> xdogLines(small, config.detail, ::mat)
+                SketchMode.PHOTO -> photoLines(small, config.detail, ::mat)
                 SketchMode.LINE_ART -> lineArtLines(small, config.detail, ::mat)
             }
             val bytes = ByteArray((lines.total() * lines.channels()).toInt())
@@ -40,31 +40,32 @@ object ImagePreprocessor {
     }
 
     /**
-     * XDoG-style edges: difference of two Gaussians; strongly negative responses are
-     * dark lines. Lower detail = larger blur and a stricter threshold.
+     * Canny edges on an edge-preserving smoothed image. Unlike filled DoG blobs (which
+     * thinning collapses to dots), Canny gives 1px contours, so facial features survive.
+     * Thresholds follow the image median; lower detail = more blur and stricter thresholds.
      */
-    private fun xdogLines(gray: Mat, detail: Float, mat: () -> Mat): Mat {
+    private fun photoLines(gray: Mat, detail: Float, mat: () -> Mat): Mat {
         val smooth = mat()
-        Imgproc.bilateralFilter(gray, smooth, 7, 50.0, 50.0)
-        val f = mat()
-        smooth.convertTo(f, CvType.CV_32F, 1.0 / 255.0)
-        val sigma = 1.0 + (1.0 - detail) * 1.5
-        val g1 = mat()
-        val g2 = mat()
-        Imgproc.GaussianBlur(f, g1, Size(0.0, 0.0), sigma)
-        Imgproc.GaussianBlur(f, g2, Size(0.0, 0.0), sigma * 1.6)
-        val dog = mat()
-        Core.addWeighted(g1, 1.0, g2, -0.98, 0.0, dog)
-        val threshold = -0.008 - (1.0 - detail) * 0.008
-        val binF = mat()
-        Imgproc.threshold(dog, binF, threshold, 255.0, Imgproc.THRESH_BINARY_INV)
-        val bin = mat()
-        binF.convertTo(bin, CvType.CV_8U)
-        val opened = mat()
-        val kernel = Mat.ones(2, 2, CvType.CV_8U)
-        Imgproc.morphologyEx(bin, opened, Imgproc.MORPH_OPEN, kernel)
-        kernel.release()
-        return opened
+        Imgproc.bilateralFilter(gray, smooth, 9, 50.0, 50.0)
+        val blurred = mat()
+        Imgproc.GaussianBlur(smooth, blurred, Size(0.0, 0.0), 1.0 + (1.0 - detail) * 1.5)
+        val low = maxOf(10.0, (0.66 - 0.3 * detail) * median(blurred) * 0.5)
+        val edges = mat()
+        Imgproc.Canny(blurred, edges, low, low * 2.5, 3, true)
+        return edges
+    }
+
+    private fun median(gray: Mat): Double {
+        val bytes = ByteArray((gray.total() * gray.channels()).toInt())
+        gray.get(0, 0, bytes)
+        val histogram = IntArray(256)
+        bytes.forEach { histogram[it.toInt() and 0xFF]++ }
+        var seen = 0
+        for (v in 0 until 256) {
+            seen += histogram[v]
+            if (seen * 2 >= bytes.size) return v.toDouble()
+        }
+        return 128.0
     }
 
     /**
