@@ -51,7 +51,7 @@ data class EngineConfig(
     val twoOptPasses: Int = 2,
 ) {
     companion object {
-        const val MAX_WORKING_SIDE = 512
+        const val MAX_WORKING_SIDE = 1024
     }
 }
 

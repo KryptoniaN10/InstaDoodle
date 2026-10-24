@@ -153,7 +153,7 @@ fun HomeScreen(state: UiState, serviceRunning: Boolean, vm: MainViewModel) {
                     }
                 }
                 LabeledSlider("Detail level", state.detail, 0f..1f, "${(state.detail * 100).roundToInt()}%") { vm.setDetail(it) }
-                LabeledSlider("Max strokes", state.maxStrokes.toFloat(), 20f..500f, "${state.maxStrokes}") { vm.setMaxStrokes(it.roundToInt()) }
+                LabeledSlider("Max strokes", state.maxStrokes.toFloat(), 20f..1000f, "${state.maxStrokes}") { vm.setMaxStrokes(it.roundToInt()) }
             }
         }
         Button(onClick = vm::generate, enabled = !state.processing && state.sourceBitmap != null, modifier = Modifier.fillMaxWidth()) {

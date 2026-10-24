@@ -19,10 +19,10 @@ More in [docs/screenshots](docs/screenshots).
 
 ## Features
 
-- **Image → strokes engine**: Photo Picker or bundled samples; PHOTO (difference-of-Gaussians
+- **Image → strokes engine**: Photo Picker or bundled samples; PHOTO (Canny
   edges) and LINE_ART (Otsu threshold) modes; Zhang-Suen thinning, skeleton tracing,
   Ramer-Douglas-Peucker simplification, endpoint merging, short-stroke removal, a stroke cap
-  (default 250), and greedy nearest-neighbour ordering with stroke reversal plus 2-opt to cut
+  (default 400, up to 1000), and greedy nearest-neighbour ordering with stroke reversal plus 2-opt to cut
   pen-up travel. Output points are normalised to `[0,1]`.
 - **Preview**: animated replay of the strokes, stroke count and pen-up travel.
 - **Library**: sketches saved as JSON in app-private storage.
@@ -51,7 +51,7 @@ flowchart LR
     end
     VM[MainViewModel<br/>StateFlow]
     subgraph Engine["engine/"]
-        Loader[ImageLoader<br/>EXIF, downsample] --> Pre[ImagePreprocessor<br/>OpenCV: resize 512, denoise,<br/>Canny / Otsu]
+        Loader[ImageLoader<br/>EXIF, downsample] --> Pre[ImagePreprocessor<br/>OpenCV: resize 1024, denoise,<br/>Canny / Otsu]
         Pre --> Extract[StrokeExtractor<br/>thin → trace → merge →<br/>simplify → filter → normalise → order]
     end
     subgraph Data["data/"]

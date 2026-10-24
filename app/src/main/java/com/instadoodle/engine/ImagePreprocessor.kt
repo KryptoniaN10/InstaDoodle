@@ -48,8 +48,8 @@ object ImagePreprocessor {
         val smooth = mat()
         Imgproc.bilateralFilter(gray, smooth, 9, 50.0, 50.0)
         val blurred = mat()
-        Imgproc.GaussianBlur(smooth, blurred, Size(0.0, 0.0), 1.0 + (1.0 - detail) * 1.5)
-        val low = maxOf(10.0, (0.66 - 0.3 * detail) * median(blurred) * 0.5)
+        Imgproc.GaussianBlur(smooth, blurred, Size(0.0, 0.0), 0.7 + (1.0 - detail) * 1.8)
+        val low = maxOf(6.0, (0.5 - 0.38 * detail) * median(blurred))
         val edges = mat()
         Imgproc.Canny(blurred, edges, low, low * 2.5, 3, true)
         return edges

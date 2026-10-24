@@ -33,6 +33,10 @@ real Instagram app; see [docs/INSTAGRAM_TEST_CHECKLIST.md](docs/INSTAGRAM_TEST_C
 
 PHOTO mode switched from thresholded DoG to Canny edges, plus speck removal, spur pruning and stroke smoothing. The portrait sample previously lost the face (DoG blobs thinned to dots); it now keeps eyes, nose, mouth and chin (`docs/screenshots/09-preview-portrait.png`). `AccuracyTest` checks strokes stay within 2 px of the cleaned source lines.
 
+## Detail update (v1.0.3)
+
+Max strokes now goes up to 1000 (default 400), default Detail is 70%, and images are processed at up to 1024 px. Portrait sample: 256 strokes at defaults, 478 at Detail 100% / Max 1000.
+
 ## Known limitations
 
 - Instagram compatibility is unknown. Instagram may change its UI, ignore injected gestures, or

@@ -14,6 +14,13 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-24T23:35:30+05:30 — More detailed sketches, higher stroke limit
+
+- Changed: Max strokes slider 20–500 → 20–1000 and default 250 → 400; default Detail 50% → 70%; working resolution 512 → 1024 px (`EngineConfig.MAX_WORKING_SIDE`; only downscales, so large gallery photos keep more detail); PHOTO Canny uses less blur and lower thresholds as Detail rises (`ImagePreprocessor.photoLines`); version 1.0.3.
+- Why: User asked for more detailed doodles with more strokes.
+- Validation: `./gradlew testDebugUnitTest assembleDebug` pass; `./gradlew connectedDebugAndroidTest` 4/4 pass; on the emulator the portrait sample gives 256 strokes at the new defaults (was 180) and 478 at Detail 100% / Max 1000 (`docs/screenshots/09-preview-portrait.png`).
+- Limitations: More strokes means proportionally longer replay on Instagram; high Detail adds texture lines on busy photos. Instagram not tested.
+
 ## 2026-10-24T23:23:03+05:30 — More accurate sketches (PHOTO edges, noise and spur cleanup)
 
 - Changed: PHOTO mode in `ImagePreprocessor` now uses Canny edges (bilateral + Gaussian smoothing, median-based thresholds) instead of thresholded DoG; new `Cleanup` removes ink specks before thinning, prunes short skeleton spurs, and smooths pixel staircase before simplification (`StrokeExtractor`, `EngineConfig`); simplify epsilon 1.2 → 0.8 px; minimum stroke length at 50% detail 12 → 9 px; added `AccuracyTest`; refreshed preview screenshots; version 1.0.2.
