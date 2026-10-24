@@ -4,12 +4,12 @@ Complete this file during the hackathon and use it to prepare your submission th
 
 ## Project
 
-- **Project name:** TODO
-- **Short description:** TODO — describe the problem, what you built, and who benefits.
-- **Code repository URL:** TODO
-- **Final submitted implementation commit SHA:** TODO
-- **Working demo URL or local demo steps:** TODO
-- **Demo access requirements:** TODO — explain any prerequisites without including private credentials.
+- **Project name:** InstaDoodle
+- **Short description:** Android app that turns an image into a simplified hand-drawn stroke set and replays it as touch gestures (AccessibilityService overlay) on drawing canvases such as Instagram DM Draw. On-device only, no network.
+- **Code repository URL:** https://github.com/KryptoniaN10/InstaDoodle
+- **Final submitted implementation commit SHA:** `142779d` (later commits only update docs)
+- **Working demo URL or local demo steps:** Install the debug APK, enable the accessibility service, pick the Logo sample → Generate sketch → Test canvas → Start. See README "First run" and `docs/screenshots/`.
+- **Demo access requirements:** Android 8.0+ device or emulator. No accounts needed for the test canvas; Instagram account only for the (untested) Instagram flow.
 
 ## Participants
 
@@ -17,18 +17,18 @@ List participants according to the organizers' current participation format. Rem
 
 | Participant name | GitHub handle | Contribution |
 | --- | --- | --- |
-| TODO | TODO | TODO |
+| Rinjan | KryptoniaN10 | Project idea and specification |
 
 ## Run and demonstrate
 
-- **Prerequisites and versions:** TODO
-- **Install command:** TODO
-- **Required environment variable names:** TODO — use a sanitized example file if needed.
-- **Start command:** TODO
-- **Demo walkthrough:** TODO — brief steps showing the implemented features.
-- **Checks performed and results:** TODO
-- **Known limitations or incomplete features:** TODO
-- **Libraries, APIs, and public datasets used:** TODO — link sources and record attribution where required.
+- **Prerequisites and versions:** JDK 17, Android SDK platform 34; Gradle 8.7 via wrapper
+- **Install command:** `./gradlew assembleDebug && adb install -r app/build/outputs/apk/debug/app-debug.apk`
+- **Required environment variable names:** None (release signing secrets are optional, see `.github/workflows/release.yml`)
+- **Start command:** Launch InstaDoodle from the device launcher
+- **Demo walkthrough:** Onboarding → enable service → sample image → PHOTO/LINE_ART + sliders → Generate → Replay/Save → Test canvas → overlay Start/Pause/Stop/Calibrate → Library → Settings
+- **Checks performed and results:** `./gradlew testDebugUnitTest` pass, `./gradlew connectedDebugAndroidTest` 4/4 pass (API 34 emulator), manual emulator verification (see PROGRESS.md)
+- **Known limitations or incomplete features:** Not tested in real Instagram (checklist in `docs/INSTAGRAM_TEST_CHECKLIST.md`); single emulator configuration verified
+- **Libraries, APIs, and public datasets used:** [OpenCV 4.9.0](https://opencv.org/) (Apache 2.0), Jetpack Compose / AndroidX, Kotlin coroutines. Sample images generated for this repo (portrait derived from scikit-image's public-domain `astronaut` image).
 - **AI usage record:** [AI_USAGE.md](AI_USAGE.md)
 - **Development change log:** [CHANGELOG.md](CHANGELOG.md)
 
