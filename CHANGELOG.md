@@ -14,6 +14,13 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-25T04:15:00+05:30 — Build-time Gemini API key injection & cleanup
+
+- Changed: Configured `build.gradle.kts` to read `GEMINI_API_KEY` from `local.properties` into `BuildConfig.GEMINI_API_KEY`; updated `ImagePickerScreen.kt` to pre-populate and auto-enable AI mode when the key is provided at build time while hiding the manual input field; removed redundant `GeminiImageStyler.kt`.
+- Why: Allowed user to bake the API key into the build without having to paste it into the app UI manually every time.
+- Validation: `./gradlew assembleDebug` succeeded in 9s; verified `BuildConfig` generation.
+- Limitations: Key is compiled into the APK if specified in `local.properties`.
+
 ## 2026-10-25T04:00:00+05:30 — AI line-art preprocessing step (Gemini image generation)
 
 - Changed: New `AiImagePreprocessor.kt` sends the source photo to `gemini-2.0-flash-preview-image-generation` via the Gemini REST API and gets back a clean black-on-white line-art bitmap; this is then fed into the existing OpenCV pipeline instead of the raw photo. `ImagePickerScreen.kt` gains an "AI Line-Art Preprocessing" toggle card with an API-key field (masked, persisted in `SharedPreferences`); the preview tab bar grows a third "AI Line Art" tab when AI output is available; `AndroidManifest.xml` gets the `INTERNET` permission.
