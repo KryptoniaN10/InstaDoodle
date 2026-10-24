@@ -14,6 +14,13 @@ Record each meaningful project change during the event, newest first. Update thi
 
 ## Event build log
 
+## 2026-10-25T04:00:00+05:30 — AI line-art preprocessing step (Gemini image generation)
+
+- Changed: New `AiImagePreprocessor.kt` sends the source photo to `gemini-2.0-flash-preview-image-generation` via the Gemini REST API and gets back a clean black-on-white line-art bitmap; this is then fed into the existing OpenCV pipeline instead of the raw photo. `ImagePickerScreen.kt` gains an "AI Line-Art Preprocessing" toggle card with an API-key field (masked, persisted in `SharedPreferences`); the preview tab bar grows a third "AI Line Art" tab when AI output is available; `AndroidManifest.xml` gets the `INTERNET` permission.
+- Why: Canny/adaptive-threshold edge detection on a complex photo picks up noise, textures, and shadows that produce cluttered doodles. A Gemini image-generation pass first simplifies the scene into semantically-meaningful outlines, which the contour pipeline then traces cleanly — yielding far fewer but better-placed strokes.
+- Validation: `assembleDebug` pass; build verified locally. Runtime testing requires a valid Gemini API key from https://aistudio.google.com/app/apikey. AI step gracefully falls back to the original bitmap on API error so the app never hard-crashes.
+- Limitations: Gemini API call takes 10–60 s; there is currently no streaming indicator beyond the status text. The `gemini-2.0-flash-preview-image-generation` model is in preview and may have rate limits.
+
 ## 2026-10-25T00:08:37+05:30 — UI redesign and splash animation
 
 - Changed: New `SplashScreen` (a pen draws a star and squiggle, then the title pops in); `Theme.kt` with Instagram-style gradient brand colours and light/dark schemes; system splash and window background themed (`res/values*/themes.xml`, manifest); `Screens.kt` redesigned: gradient hero header with overlay status pill, large image picker card, sample chips, Photo/Line art chips with explanations, gradient Generate / Send buttons, quick-action tiles (Library count, Settings, Demo, Test canvas), Preview stat chips with an estimated drawing time and replay progress bar, Library as a 2-column grid, Settings grouped in cards; version 1.0.4.

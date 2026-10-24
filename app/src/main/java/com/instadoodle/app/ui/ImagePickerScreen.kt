@@ -47,11 +47,13 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -72,17 +74,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.instadoodle.app.drawing.PathSimplifier
 import com.instadoodle.app.drawing.Sketch
 import com.instadoodle.app.drawing.SketchStorage
+import com.instadoodle.app.image.AiImagePreprocessor
 import com.instadoodle.app.image.ContourExtractor
-import com.instadoodle.app.image.GeminiImageStyler
 import com.instadoodle.app.image.ImageProcessor
 import com.instadoodle.app.image.SampleImages
-import com.instadoodle.app.BuildConfig
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -95,18 +97,20 @@ fun ImagePickerScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // SharedPreferences for persisting the API key across launches
+    val prefs = remember { context.getSharedPreferences("instadoodle_prefs", 0) }
+
     // Selected image
     var currentBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var edgeBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var aiLineBitmap by remember { mutableStateOf<Bitmap?>(null) }  // AI line-art preview
     var currentSketch by remember { mutableStateOf<Sketch?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
     var statusText by remember { mutableStateOf("") }
 
-    // AI Stylization state
-    var useAiStylization by remember { mutableStateOf(false) }
-    var aiStyle by remember { mutableStateOf(GeminiImageStyler.Style.LINE_ART) }
-    var isAiProcessing by remember { mutableStateOf(false) }
-    var aiStyledBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    // AI preprocessing toggle + API key
+    var useAiPreprocessing by remember { mutableStateOf(false) }
+    var aiApiKey by remember { mutableStateOf(prefs.getString("gemini_api_key", "") ?: "") }
 
     // Pipeline Sliders & Settings
     var extractionMode by remember { mutableStateOf(ContourExtractor.Mode.PHOTO) }
@@ -122,51 +126,35 @@ fun ImagePickerScreen(
     val runPipeline: (Bitmap) -> Unit = { bitmap ->
         scope.launch {
             isProcessing = true
-            statusText = "Preprocessing image..."
             try {
+                // Step 0 (optional): AI line-art generation
+                val inputBitmap = if (useAiPreprocessing && aiApiKey.isNotBlank()) {
+                    statusText = "Generating AI line art..."
+                    val aiResult = AiImagePreprocessor.generateDoodleFriendlyImage(bitmap, aiApiKey)
+                    if (aiResult.isSuccess) {
+                        val lineBmp = aiResult.getOrThrow()
+                        aiLineBitmap = lineBmp
+                        lineBmp
+                    } else {
+                        val msg = aiResult.exceptionOrNull()?.message ?: "unknown error"
+                        snackbarHostState.showSnackbar("AI step failed: $msg — using original image")
+                        bitmap
+                    }
+                } else {
+                    aiLineBitmap = null
+                    bitmap
+                }
+
                 if (!ImageProcessor.isAvailable()) {
                     snackbarHostState.showSnackbar("Initializing OpenCV...")
                 }
 
-                // Step AI (optional): Gemini stylization
-                val pipelineInput: Bitmap = if (useAiStylization) {
-                    statusText = "✨ AI stylizing (${aiStyle.label})..."
-                    isAiProcessing = true
-                    try {
-                        val apiKey = BuildConfig.GEMINI_API_KEY
-                        if (apiKey.isBlank() || apiKey == "your_gemini_api_key_here") {
-                            snackbarHostState.showSnackbar(
-                                "⚠️ Add your GEMINI_API_KEY to local.properties"
-                            )
-                            bitmap // fall back to original
-                        } else {
-                            val result = GeminiImageStyler.stylize(
-                                inputBitmap = bitmap,
-                                style = aiStyle,
-                                apiKey = apiKey
-                            )
-                            aiStyledBitmap = result.styledBitmap
-                            result.styledBitmap
-                        }
-                    } catch (e: Exception) {
-                        snackbarHostState.showSnackbar(
-                            "AI stylization failed: ${e.message?.take(80)}"
-                        )
-                        bitmap // fall back to original on error
-                    } finally {
-                        isAiProcessing = false
-                        statusText = "Preprocessing image..."
-                    }
-                } else {
-                    aiStyledBitmap = null
-                    bitmap
-                }
-
                 // Step A: ImageProcessor
+                statusText = "Preprocessing image..."
                 val preprocessConfig = ImageProcessor.PreprocessConfig(
                     maxDimension = maxDimension
                 )
-                val preprocessResult = ImageProcessor.preprocess(pipelineInput, preprocessConfig)
+                val preprocessResult = ImageProcessor.preprocess(inputBitmap, preprocessConfig)
 
                 // Step B: ContourExtractor
                 statusText = "Extracting contours..."
@@ -346,128 +334,68 @@ fun ImagePickerScreen(
                 }
             }
 
-            // ── AI Stylization Card ────────────────────────────────────────────
+            // ── AI Preprocessing Card ─────────────────────────────────────────
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (useAiStylization)
-                        MaterialTheme.colorScheme.secondaryContainer
-                    else
-                        MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Header row with toggle
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(30.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (useAiStylization)
-                                            MaterialTheme.colorScheme.secondary
-                                        else
-                                            MaterialTheme.colorScheme.surfaceVariant
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = null,
-                                    tint = if (useAiStylization)
-                                        MaterialTheme.colorScheme.onSecondary
-                                    else
-                                        MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "2. AI Pre-Stylization",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Gemini simplifies the photo before OpenCV",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                        Column {
+                            Text(
+                                text = "AI Line-Art Preprocessing",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Gemini converts photo → clean outlines before OpenCV",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                        androidx.compose.material3.Switch(
-                            checked = useAiStylization,
-                            onCheckedChange = { enabled ->
-                                useAiStylization = enabled
-                                if (!enabled) aiStyledBitmap = null
-                                currentBitmap?.let { runPipeline(it) }
-                            }
+                        Switch(
+                            checked = useAiPreprocessing,
+                            onCheckedChange = { useAiPreprocessing = it }
                         )
                     }
 
-                    // Style chips — only visible when toggled on
-                    AnimatedVisibility(visible = useAiStylization) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = "Output Style",
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            // Row 1
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                GeminiImageStyler.Style.entries.forEach { style ->
-                                    FilterChip(
-                                        selected = aiStyle == style,
-                                        onClick = {
-                                            if (aiStyle != style) {
-                                                aiStyle = style
-                                                currentBitmap?.let { runPipeline(it) }
-                                            }
-                                        },
-                                        label = { Text(style.label) },
-                                        leadingIcon = if (aiStyle == style) {
-                                            { Icon(Icons.Default.CheckCircle, null, Modifier.size(16.dp)) }
-                                        } else null,
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer
-                                        )
-                                    )
-                                }
-                            }
-
-                            // AI processing indicator
-                            if (isAiProcessing) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                    Text(
-                                        text = statusText,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.secondary
-                                    )
-                                }
-                            }
-                        }
+                    AnimatedVisibility(visible = useAiPreprocessing) {
+                        OutlinedTextField(
+                            value = aiApiKey,
+                            onValueChange = { key ->
+                                aiApiKey = key
+                                prefs.edit().putString("gemini_api_key", key).apply()
+                            },
+                            label = { Text("Gemini API Key") },
+                            placeholder = { Text("AIza...") },
+                            visualTransformation = PasswordVisualTransformation(),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        )
                     }
                 }
             }
 
-            // Image Preview Tabs (Source / ✨ AI Styled / Edge Map)
+            // Image Preview Tabs (Source / AI Line Art / Edge Map)
             if (currentBitmap != null) {
-                val tabCount = if (useAiStylization) 3 else 2
+                // Tab count depends on whether AI line art is available
+                val tabLabels = buildList {
+                    add("Source")
+                    if (aiLineBitmap != null) add("AI Line Art")
+                    add("Edge Map")
+                }
                 var selectedPreviewTab by remember { mutableIntStateOf(0) }
-                // Keep selected tab in range if AI toggle changes
-                if (selectedPreviewTab >= tabCount) selectedPreviewTab = 0
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -477,24 +405,14 @@ fun ImagePickerScreen(
                     )
                 ) {
                     Column {
-                        TabRow(selectedTabIndex = selectedPreviewTab) {
-                            Tab(
-                                selected = selectedPreviewTab == 0,
-                                onClick = { selectedPreviewTab = 0 },
-                                text = { Text("Source") }
-                            )
-                            if (useAiStylization) {
+                        TabRow(selectedTabIndex = selectedPreviewTab.coerceAtMost(tabLabels.lastIndex)) {
+                            tabLabels.forEachIndexed { index, label ->
                                 Tab(
-                                    selected = selectedPreviewTab == 1,
-                                    onClick = { selectedPreviewTab = 1 },
-                                    text = { Text("✨ AI Styled") }
+                                    selected = selectedPreviewTab == index,
+                                    onClick = { selectedPreviewTab = index },
+                                    text = { Text(label) }
                                 )
                             }
-                            Tab(
-                                selected = selectedPreviewTab == tabCount - 1,
-                                onClick = { selectedPreviewTab = tabCount - 1 },
-                                text = { Text("Edge Map") }
-                            )
                         }
 
                         Box(
@@ -504,37 +422,24 @@ fun ImagePickerScreen(
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center
                         ) {
+                            val tab = selectedPreviewTab.coerceAtMost(tabLabels.lastIndex)
+                            val label = tabLabels.getOrNull(tab)
                             when {
-                                selectedPreviewTab == 0 -> {
-                                    Image(
-                                        bitmap = currentBitmap!!.asImageBitmap(),
-                                        contentDescription = "Source Bitmap",
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
-                                useAiStylization && selectedPreviewTab == 1 -> {
-                                    val styledBm = aiStyledBitmap
-                                    if (styledBm != null) {
-                                        Image(
-                                            bitmap = styledBm.asImageBitmap(),
-                                            contentDescription = "AI Styled Bitmap",
-                                            modifier = Modifier.fillMaxSize()
-                                        )
-                                    } else {
-                                        Text(
-                                            text = if (isAiProcessing) "Generating…" else "Enable AI stylization and apply",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                                selectedPreviewTab == tabCount - 1 && edgeBitmap != null -> {
-                                    Image(
-                                        bitmap = edgeBitmap!!.asImageBitmap(),
-                                        contentDescription = "Edge Detection Bitmap",
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
+                                label == "Source" && currentBitmap != null -> Image(
+                                    bitmap = currentBitmap!!.asImageBitmap(),
+                                    contentDescription = "Source Bitmap",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                label == "AI Line Art" && aiLineBitmap != null -> Image(
+                                    bitmap = aiLineBitmap!!.asImageBitmap(),
+                                    contentDescription = "AI Line Art",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                label == "Edge Map" && edgeBitmap != null -> Image(
+                                    bitmap = edgeBitmap!!.asImageBitmap(),
+                                    contentDescription = "Edge Detection Bitmap",
+                                    modifier = Modifier.fillMaxSize()
+                                )
                             }
 
                             if (isProcessing) {
@@ -556,7 +461,6 @@ fun ImagePickerScreen(
                     }
                 }
             }
-
 
             // Live Stroke Statistics Card
             currentSketch?.let { sketch ->
@@ -654,7 +558,7 @@ fun ImagePickerScreen(
                             Icon(Icons.Default.Tune, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "3. Contour & Path Parameters",
+                                text = "2. Contour & Path Parameters",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
