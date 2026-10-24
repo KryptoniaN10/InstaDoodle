@@ -1,35 +1,39 @@
-# Local secrets; sanitized example files may be committed.
-.env
-.env.*
-!.env.example
-!.env.*.example
-*.pem
-*.key
-
-# Common dependencies, build output, caches, and local tooling.
-node_modules/
-.next/
-dist/
+# Built outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+bin/
 build/
-coverage/
-.venv/
-venv/
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.DS_Store
-Thumbs.db
-*.log
+out/
+.cxx/
 
-# Add entries appropriate to your chosen language or framework.
-
-# Android / Gradle
+# Gradle
 .gradle/
+gradle/wrapper/gradle-wrapper.jar
+
+# Local config & secrets — NEVER commit these
 local.properties
-*.iml
+keystore.properties
+*.jks
+*.keystore
+
+# Android Studio / IDE
 .idea/
+.devin/
+*.iml
+*.iws
+*.ipr
+.DS_Store
 captures/
 .externalNativeBuild/
-.cxx/
-*.apk
-!docs/**/*.apk
+.navigation/
+
+# Lint
+lint/intermediates/
+lint/generated/
+lint/outputs/
+lint/tmp/
+
+# Kotlin
+*.kotlin_module

@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.InstaDoodle" parent="@android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#FF833AB4</item>
-    </style>
+    <style name="Theme.InstaDoodle" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

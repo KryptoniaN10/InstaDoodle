@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.InstaDoodle" parent="@android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#FF833AB4</item>
-        <item name="android:windowSplashScreenBackground">#FF833AB4</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">#FFE1306C</item>
-    </style>
-</resources>
